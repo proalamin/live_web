@@ -1,0 +1,10 @@
+{
+  "_note": "Edit this file each night. Each channel = one stream link.",
+  "channels": [
+    { "id": "ch-1", "name": "T Sports HD", "quality": "720p",  "url": "https://1nyaler.streamhostingcdn.top/stream/32/index.m3u8" },
+    { "id": "ch-2", "name": "Bein Max 2",  "quality": "1080p", "url": "http://go8knm.optikl.ink/X/index.php/Besyria1/video.m3u8" },
+    { "id": "ch-3", "name": "4K HDR",      "quality": "1080p", "url": "http://go8knm.optikl.ink/X/index.php/Besyria3/video.m3u8" },
+    { "id": "ch-4", "name": "Win Sports",  "quality": "720p",  "url": "https://1nyaler.streamhostingcdn.top/stream/32/index.m3u8" },
+    { "id": "ch-5", "name": "Bein Sports Direct", "quality": "1080p", "url": "https://1nyaler.streamhostingcdn.top/stream/23/index.m3u8" }
+  ]
+}
