@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import Hls from 'hls.js'
-import { buildHlsConfig, detectStreamType } from '../utils/streamUtils'
+import { buildHlsConfig, detectStreamType, toProxiedUrl } from '../utils/streamUtils'
 
 /**
  * useHlsPlayer
@@ -47,7 +47,7 @@ export function useHlsPlayer(videoRef, src, { onError, onManifest, onPlaying } =
     const hls = new Hls(buildHlsConfig())
     hlsRef.current = hls
 
-    hls.loadSource(url)
+    hls.loadSource(toProxiedUrl(url))
     hls.attachMedia(video)
 
     hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {

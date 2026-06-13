@@ -71,7 +71,18 @@ export function formatKickoff(isoString) {
 /**
  * Quality label → short badge string
  */
+// In dev, Vite serves a CORS proxy at /proxy/<encoded-url>.
+// In production, set VITE_PROXY_BASE to your Cloudflare Worker URL.
+const PROXY_BASE = import.meta.env.VITE_PROXY_BASE
+  ?? (import.meta.env.DEV ? '/proxy' : '')
+
+export function toProxiedUrl(url) {
+  if (!url || url.startsWith('https://') || !PROXY_BASE) return url
+  return `${PROXY_BASE}/${encodeURIComponent(url)}`
+}
+
 export const QUALITY_COLORS = {
+  '4K':    'bg-yellow-500 text-black',
   '1080p': 'bg-yellow-500 text-black',
   '720p':  'bg-blue-500 text-white',
   'SD':    'bg-slate-500 text-white',
