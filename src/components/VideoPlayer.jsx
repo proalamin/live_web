@@ -82,7 +82,7 @@ export default function VideoPlayer({
   }, [onAutoSwitch])
 
   useAutoSwitch(videoRef, hlsRef, source?.url, handleAutoSwitch, {
-    stallThreshold: 4000,
+    stallThreshold: 5000,
     fatalDelay:     1000,
     enabled:        isPlaying,
   })
