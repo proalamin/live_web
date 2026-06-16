@@ -74,13 +74,6 @@ export default function VideoPlayer({
     setActiveLevel(levelIdx)
   }, [])
 
-  const handleQualityChange = useCallback((levelIdx) => {
-    if (hlsRef.current) {
-      hlsRef.current.currentLevel = levelIdx
-      setActiveLevel(levelIdx)
-    }
-  }, [hlsRef])
-
   // Reset quality when channel changes
   useEffect(() => {
     setQualityLevels([])
@@ -97,6 +90,13 @@ export default function VideoPlayer({
       onLevelSwitched: handleLevelSwitched,
     }
   )
+
+  const handleQualityChange = useCallback((levelIdx) => {
+    if (hlsRef.current) {
+      hlsRef.current.currentLevel = levelIdx
+      setActiveLevel(levelIdx)
+    }
+  }, [hlsRef])
 
   // ── Auto-switch hook ───────────────────────────────────────────────
   const handleAutoSwitch = useCallback((reason) => {
