@@ -1,14 +1,3 @@
-/**
- * PlayerControls
- *
- * Thin control bar rendered below/over the video.
- * Provides:
- *  - Play / Pause
- *  - Volume slider + mute toggle
- *  - Source selector (dropdown of all sources for the current match)
- *  - Fullscreen
- *  - Current source label / quality badge
- */
 import { useState, useCallback } from 'react'
 import { QUALITY_COLORS } from '../utils/streamUtils'
 
@@ -19,19 +8,28 @@ export default function PlayerControls({
   volume,
   allSources,
   activeSourceIndex,
+  qualityLevels,
+  activeLevel,
   onManualSwitch,
+  onQualityChange,
   onTogglePlay,
   onToggleMute,
   onVolumeChange,
   onFullscreen,
 }) {
   const [showSources, setShowSources] = useState(false)
+  const [showQuality, setShowQuality] = useState(false)
   const activeSource = allSources[activeSourceIndex] ?? null
 
   const handleVolumeClick = useCallback((e) => {
-    // clicking volume slider should not bubble to play/pause
     e.stopPropagation()
   }, [])
+
+  const qualityLabel = activeLevel === -1
+    ? 'Auto'
+    : qualityLevels[activeLevel]?.height
+      ? `${qualityLevels[activeLevel].height}p`
+      : `Level ${activeLevel + 1}`
 
   return (
     <div
@@ -43,12 +41,9 @@ export default function PlayerControls({
 
       {/* Controls row */}
       <div className="bg-black/60 backdrop-blur-sm px-4 py-2 flex items-center gap-3">
+
         {/* Play/Pause */}
-        <button
-          onClick={onTogglePlay}
-          className="p-1.5 rounded hover:bg-white/10 transition-colors"
-          aria-label={isPlaying ? 'Pause' : 'Play'}
-        >
+        <button onClick={onTogglePlay} className="p-1.5 rounded hover:bg-white/10 transition-colors" aria-label={isPlaying ? 'Pause' : 'Play'}>
           {isPlaying ? (
             <svg className="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd"/>
@@ -62,11 +57,7 @@ export default function PlayerControls({
 
         {/* Volume */}
         <div className="flex items-center gap-1.5" onClick={handleVolumeClick}>
-          <button
-            onClick={onToggleMute}
-            className="p-1 rounded hover:bg-white/10 transition-colors"
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
-          >
+          <button onClick={onToggleMute} className="p-1 rounded hover:bg-white/10 transition-colors" aria-label={isMuted ? 'Unmute' : 'Mute'}>
             {isMuted || volume === 0 ? (
               <svg className="w-4 h-4 text-slate-300" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd"/>
@@ -78,10 +69,7 @@ export default function PlayerControls({
             )}
           </button>
           <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
+            type="range" min="0" max="1" step="0.05"
             value={isMuted ? 0 : volume}
             onChange={e => onVolumeChange(parseFloat(e.target.value))}
             className="w-20 h-1 accent-accent cursor-pointer"
@@ -94,34 +82,85 @@ export default function PlayerControls({
           LIVE
         </span>
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Active source label */}
+        {/* Active channel label */}
         {activeSource && (
-          <span className="text-xs text-slate-400 hidden sm:block truncate max-w-[120px]">
+          <span className="text-xs text-slate-400 hidden sm:block truncate max-w-[100px]">
             {activeSource.name}
           </span>
         )}
 
-        {/* Quality badge */}
-        {activeSource?.quality && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${QUALITY_COLORS[activeSource.quality] ?? 'bg-slate-600 text-white'}`}>
-            {activeSource.quality}
-          </span>
+        {/* Quality selector — only shown when stream has multiple levels */}
+        {qualityLevels.length > 1 && (
+          <div className="relative">
+            <button
+              onClick={() => { setShowQuality(v => !v); setShowSources(false) }}
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs text-slate-300 hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM9 16a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1z"/>
+              </svg>
+              {qualityLabel}
+            </button>
+
+            {showQuality && (
+              <div className="absolute bottom-full right-0 mb-1 w-36 bg-pitch-800 border border-pitch-600 rounded-lg shadow-xl overflow-hidden z-30">
+                {/* Auto option */}
+                <button
+                  onClick={() => { onQualityChange(-1); setShowQuality(false) }}
+                  className={[
+                    'w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
+                    activeLevel === -1 ? 'bg-accent/20 text-accent' : 'text-slate-300 hover:bg-pitch-700',
+                  ].join(' ')}
+                >
+                  {activeLevel === -1 && <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5V1z"/></svg>}
+                  {activeLevel !== -1 && <span className="w-3 flex-shrink-0" />}
+                  <span>Auto</span>
+                  <span className="ml-auto text-[10px] text-slate-500">ABR</span>
+                </button>
+
+                {/* Individual quality levels — highest first */}
+                {[...qualityLevels].reverse().map((lvl, i) => {
+                  const origIdx = qualityLevels.length - 1 - i
+                  const label = lvl.height ? `${lvl.height}p` : `Level ${origIdx + 1}`
+                  const isActive = activeLevel === origIdx
+                  return (
+                    <button
+                      key={origIdx}
+                      onClick={() => { onQualityChange(origIdx); setShowQuality(false) }}
+                      className={[
+                        'w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
+                        isActive ? 'bg-accent/20 text-accent' : 'text-slate-300 hover:bg-pitch-700',
+                      ].join(' ')}
+                    >
+                      {isActive && <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5V1z"/></svg>}
+                      {!isActive && <span className="w-3 flex-shrink-0" />}
+                      <span>{label}</span>
+                      {lvl.bitrate && (
+                        <span className="ml-auto text-[10px] text-slate-500">
+                          {Math.round(lvl.bitrate / 1000)}k
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Source picker */}
+        {/* Channels picker */}
         {allSources.length > 1 && (
           <div className="relative">
             <button
-              onClick={() => setShowSources(v => !v)}
+              onClick={() => { setShowSources(v => !v); setShowQuality(false) }}
               className="flex items-center gap-1 px-2 py-1 rounded text-xs text-slate-300 hover:bg-white/10 transition-colors"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 8a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zM3 12a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/>
               </svg>
-              Sources
+              Channels
             </button>
 
             {showSources && (
@@ -132,17 +171,13 @@ export default function PlayerControls({
                     onClick={() => { onManualSwitch(idx); setShowSources(false) }}
                     className={[
                       'w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-                      idx === activeSourceIndex
-                        ? 'bg-accent/20 text-accent'
-                        : 'text-slate-300 hover:bg-pitch-700',
+                      idx === activeSourceIndex ? 'bg-accent/20 text-accent' : 'text-slate-300 hover:bg-pitch-700',
                     ].join(' ')}
                   >
-                    {idx === activeSourceIndex && (
-                      <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 12 12" fill="currentColor">
-                        <path d="M2 1l9 5-9 5V1z"/>
-                      </svg>
-                    )}
-                    {idx !== activeSourceIndex && <span className="w-3 flex-shrink-0" />}
+                    {idx === activeSourceIndex
+                      ? <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l9 5-9 5V1z"/></svg>
+                      : <span className="w-3 flex-shrink-0" />
+                    }
                     <span className="flex-1 truncate">{src.name}</span>
                     {src.quality && (
                       <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${QUALITY_COLORS[src.quality] ?? 'bg-slate-600 text-white'}`}>
@@ -157,11 +192,7 @@ export default function PlayerControls({
         )}
 
         {/* Fullscreen */}
-        <button
-          onClick={onFullscreen}
-          className="p-1.5 rounded hover:bg-white/10 transition-colors"
-          aria-label="Fullscreen"
-        >
+        <button onClick={onFullscreen} className="p-1.5 rounded hover:bg-white/10 transition-colors" aria-label="Fullscreen">
           <svg className="w-4 h-4 text-slate-300" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 110-2h4a1 1 0 011 1v4a1 1 0 11-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 112 0v1.586l2.293-2.293a1 1 0 011.414 1.414L6.414 15H8a1 1 0 110 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 110-2h1.586l-2.293-2.293a1 1 0 011.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd"/>
           </svg>

@@ -16,7 +16,7 @@ import { buildHlsConfig, detectStreamType, toProxiedUrl } from '../utils/streamU
  *
  * @returns {{ hlsRef, isHlsSupported, loadSrc }}
  */
-export function useHlsPlayer(videoRef, src, { onError, onManifest, onPlaying } = {}) {
+export function useHlsPlayer(videoRef, src, { onError, onManifest, onPlaying, onLevelsLoaded, onLevelSwitched } = {}) {
   const hlsRef = useRef(null)
   const isHlsSupported = Hls.isSupported()
 
@@ -53,6 +53,11 @@ export function useHlsPlayer(videoRef, src, { onError, onManifest, onPlaying } =
     hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
       video.play().catch(() => {})
       onManifest?.(_event, data)
+      onLevelsLoaded?.(hls.levels)
+    })
+
+    hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
+      onLevelSwitched?.(data.level)
     })
 
     hls.on(Hls.Events.ERROR, (event, data) => {

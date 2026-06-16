@@ -32,15 +32,17 @@ export default function VideoPlayer({
   const videoRef    = useRef(null)
   const wrapperRef  = useRef(null)
 
-  const [isPlaying,   setIsPlaying]   = useState(false)
-  const [isMuted,     setIsMuted]     = useState(false)
-  const [volume,      setVolume]      = useState(1)
-  const [isBuffering, setIsBuffering] = useState(false)
-  const [isSwitching, setIsSwitching] = useState(false)
-  const [switchReason,setSwitchReason]= useState(null)
-  const [showControls,setShowControls]= useState(true)
-  const [errorMsg,    setErrorMsg]    = useState(null)
-  const [corsWarning, setCorsWarning] = useState(false)
+  const [isPlaying,    setIsPlaying]    = useState(false)
+  const [isMuted,      setIsMuted]      = useState(false)
+  const [volume,       setVolume]       = useState(1)
+  const [isBuffering,  setIsBuffering]  = useState(false)
+  const [isSwitching,  setIsSwitching]  = useState(false)
+  const [switchReason, setSwitchReason] = useState(null)
+  const [showControls, setShowControls] = useState(true)
+  const [errorMsg,     setErrorMsg]     = useState(null)
+  const [corsWarning,  setCorsWarning]  = useState(false)
+  const [qualityLevels,setQualityLevels]= useState([])
+  const [activeLevel,  setActiveLevel]  = useState(-1)
   const controlsTimerRef = useRef(null)
 
   // ── HLS playback hook ──────────────────────────────────────────────
@@ -63,12 +65,36 @@ export default function VideoPlayer({
     setSwitchReason(null)
   }, [])
 
+  const handleLevelsLoaded = useCallback((levels) => {
+    setQualityLevels(levels)
+    setActiveLevel(-1)
+  }, [])
+
+  const handleLevelSwitched = useCallback((levelIdx) => {
+    setActiveLevel(levelIdx)
+  }, [])
+
+  const handleQualityChange = useCallback((levelIdx) => {
+    if (hlsRef.current) {
+      hlsRef.current.currentLevel = levelIdx
+      setActiveLevel(levelIdx)
+    }
+  }, [hlsRef])
+
+  // Reset quality when channel changes
+  useEffect(() => {
+    setQualityLevels([])
+    setActiveLevel(-1)
+  }, [source?.url])
+
   const { hlsRef } = useHlsPlayer(
     videoRef,
     source?.url ?? null,
     {
-      onError:    handleHlsError,
-      onManifest: handleManifestParsed,
+      onError:         handleHlsError,
+      onManifest:      handleManifestParsed,
+      onLevelsLoaded:  handleLevelsLoaded,
+      onLevelSwitched: handleLevelSwitched,
     }
   )
 
@@ -243,7 +269,10 @@ export default function VideoPlayer({
           volume={volume}
           allSources={allSources}
           activeSourceIndex={activeSourceIndex}
+          qualityLevels={qualityLevels}
+          activeLevel={activeLevel}
           onManualSwitch={onManualSwitch}
+          onQualityChange={handleQualityChange}
           onTogglePlay={handleTogglePlay}
           onToggleMute={handleToggleMute}
           onVolumeChange={handleVolumeChange}
